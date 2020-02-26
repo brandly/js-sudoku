@@ -33347,11 +33347,12 @@ var App = function App() {
     }, row.map(function (cell, x) {
       return React.createElement("td", {
         key: x,
-        className: "c".concat(x + 1, " r").concat(y + 1)
+        className: "c".concat(x + 1, " r").concat(y + 1, " ").concat(cell.size === 0 ? 'conflict' : '')
       }, cell.size > 1 ? React.createElement("div", {
         className: "remaining"
       }, Array.from(cell).map(function (num) {
         return React.createElement("span", {
+          key: num,
           onClick: function onClick() {
             setBoard(propagate(new Set([num]), {
               x: x,
