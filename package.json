@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "parcel index.html",
-    "deploy": "parcel build src/index.html --public-url ./ && gh-pages --dist dist/"
+    "deploy": "parcel build index.html --public-url ./ && gh-pages --dist dist/"
   },
   "devDependencies": {
     "gh-pages": "2.2.0",
