@@ -31,11 +31,17 @@ const App = () => {
           {board.map((row, y) => (
             <tr key={y}>
               {row.map((cell, x) => (
-                <td key={x} className={`c${x + 1} r${y + 1}`}>
+                <td
+                  key={x}
+                  className={`c${x + 1} r${y + 1} ${
+                    cell.size === 0 ? 'conflict' : ''
+                  }`}
+                >
                   {cell.size > 1 ? (
                     <div className="remaining">
                       {Array.from(cell).map(num => (
                         <span
+                          key={num}
                           onClick={() => {
                             setBoard(propagate(new Set([num]), { x, y }, board))
                           }}
