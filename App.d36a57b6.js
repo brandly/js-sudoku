@@ -33324,32 +33324,10 @@ var App = function App() {
       puzzleInput = _React$useState4[0],
       setPuzzle = _React$useState4[1];
 
-  return React.createElement("div", null, React.createElement("table", null, React.createElement("tbody", null, board.map(function (row, y) {
-    return React.createElement("tr", {
-      key: y
-    }, row.map(function (cell, x) {
-      return React.createElement("td", {
-        key: x
-      }, Array.from(cell).map(function (num) {
-        return React.createElement("span", {
-          onClick: function onClick() {
-            setBoard(propagate(new Set([num]), {
-              x: x,
-              y: y
-            }, board));
-          }
-        }, num);
-      }));
-    }));
-  }))), React.createElement("button", {
-    onClick: function onClick() {
-      var solution = search(board);
-
-      if (solution) {
-        setBoard(solution);
-      }
-    }
-  }, "search"), React.createElement("form", {
+  return React.createElement("div", {
+    className: "container"
+  }, React.createElement("h1", null, "Sudoku"), React.createElement("form", {
+    className: "row",
     onSubmit: function onSubmit(e) {
       e.preventDefault();
       setBoard(fromString(puzzleInput));
@@ -33360,7 +33338,42 @@ var App = function App() {
     onChange: function onChange(e) {
       setPuzzle(e.target.value);
     }
-  })));
+  }), React.createElement("input", {
+    type: "submit",
+    value: "View Puzzle"
+  })), React.createElement("table", null, React.createElement("tbody", null, board.map(function (row, y) {
+    return React.createElement("tr", {
+      key: y
+    }, row.map(function (cell, x) {
+      return React.createElement("td", {
+        key: x,
+        className: "c".concat(x + 1, " r").concat(y + 1)
+      }, cell.size > 1 ? React.createElement("div", {
+        className: "remaining"
+      }, Array.from(cell).map(function (num) {
+        return React.createElement("span", {
+          onClick: function onClick() {
+            setBoard(propagate(new Set([num]), {
+              x: x,
+              y: y
+            }, board));
+          }
+        }, num);
+      })) : null, React.createElement("p", {
+        className: "answer"
+      }, cell.size === 1 ? Array.from(cell)[0] : "\xA0"));
+    }));
+  }))), React.createElement("div", {
+    className: "row"
+  }, React.createElement("button", {
+    onClick: function onClick() {
+      var solution = search(board);
+
+      if (solution) {
+        setBoard(solution);
+      }
+    }
+  }, "Find Solution")));
 };
 
 render(React.createElement(App, null), document.getElementById('main'));
@@ -33392,7 +33405,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51145" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52810" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
