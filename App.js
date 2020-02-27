@@ -1,12 +1,10 @@
 const React = require('react')
 const { render } = require('react-dom')
-const { getBoard, propagate, search, fromString } = require('./')
+const { getBoard, propagate, search, fromString, easy } = require('./')
 
 const App = () => {
   const [board, setBoard] = React.useState(getBoard())
-  const [puzzleInput, setPuzzle] = React.useState(
-    '003020600900305001001806400008102900700000008006708200002609500800203009005010300'
-  )
+  const [puzzleInput, setPuzzle] = React.useState(easy)
   return (
     <div className="container">
       <h1>Sudoku</h1>

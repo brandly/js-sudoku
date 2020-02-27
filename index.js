@@ -153,9 +153,13 @@ const fromString = input => {
   return b
 }
 
+const easy =
+  '003020600900305001001806400008102900700000008006708200002609500800203009005010300'
+
 module.exports = {
   getBoard,
   propagate,
   search,
+  easy,
   fromString
 }
