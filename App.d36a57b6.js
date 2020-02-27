@@ -33073,6 +33073,14 @@ var objectKeys = Object.keys || function (obj) {
 };
 
 },{"object-assign":"node_modules/object-assign/index.js","util/":"node_modules/assert/node_modules/util/util.js"}],"index.js":[function(require,module,exports) {
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
@@ -33099,6 +33107,10 @@ var intersection = function intersection(a, b) {
   return new Set(_toConsumableArray(a).filter(function (x) {
     return b.has(x);
   }));
+};
+
+var union = function union(a, b) {
+  return new Set([].concat(_toConsumableArray(a), _toConsumableArray(b)));
 };
 
 var all = function all(list) {
@@ -33150,7 +33162,7 @@ var sameCoords = function sameCoords(a, b) {
 };
 
 var isPeer = function isPeer(a, b) {
-  return a.x === b.x || a.y === b.y || sameSquare(a, b);
+  return !sameCoords(a, b) && (a.x === b.x || a.y === b.y || sameSquare(a, b));
 };
 
 var sameSquare = function sameSquare(a, b) {
@@ -33200,10 +33212,104 @@ assert.equal(sameSquare({
   y: 3
 }), false);
 
-var propagate = function propagate(semi, coords, board) {
-  return mapBoard(function (cell, cellCoords) {
-    return sameCoords(coords, cellCoords) ? join(cell, semi) : isPeer(coords, cellCoords) ? join(cell, complement(semi)) : cell;
-  }, board);
+var encode = function encode(_ref) {
+  var x = _ref.x,
+      y = _ref.y;
+  return "".concat(x, ",").concat(y);
+};
+
+var decode = function decode(str) {
+  var _str$split$map = str.split(',').map(function (v) {
+    return parseInt(v);
+  }),
+      _str$split$map2 = _slicedToArray(_str$split$map, 2),
+      x = _str$split$map2[0],
+      y = _str$split$map2[1];
+
+  return {
+    x: x,
+    y: y
+  };
+};
+
+var buildDepMap = function buildDepMap(board) {
+  var cells = mapBoard(function (cell, coords) {
+    return {
+      cell: cell,
+      coords: coords
+    };
+  }, board).flatMap(function (row) {
+    return row;
+  });
+  return cells.reduce(function (out, _ref2) {
+    var cell = _ref2.cell,
+        coords = _ref2.coords;
+    out[encode(coords)] = {
+      deps: cells.filter(function (c) {
+        return isPeer(coords, c.coords);
+      }).map(function (_ref3) {
+        var coords = _ref3.coords;
+        return coords;
+      }),
+      queue: []
+    };
+    return out;
+  }, {});
+};
+
+var propagate = function propagate(update, coords, originalBoard) {
+  var map = buildDepMap(originalBoard);
+  var board = mapBoard(function (cell, cellCoords) {
+    return sameCoords(coords, cellCoords) ? join(cell, update) : cell;
+  }, originalBoard);
+
+  var depsForCoords = function depsForCoords(coords) {
+    return map[encode(coords)].deps;
+  };
+
+  var setOfDeps = function setOfDeps(list) {
+    return new Set(list.map(function (c) {
+      return encode(c);
+    }));
+  };
+
+  var affected = setOfDeps(depsForCoords(coords));
+  affected.forEach(function (key) {
+    map[key].queue.push(function (c) {
+      return join(c, complement(update));
+    });
+  });
+
+  while (affected.size) {
+    var incoming = affected;
+    affected = new Set();
+    incoming.forEach(function (key) {
+      var _decode = decode(key),
+          x = _decode.x,
+          y = _decode.y;
+
+      var og = board[y][x];
+      var newVal = map[key].queue.reduce(function (val, fn) {
+        return fn(val);
+      }, og);
+      board[y][x] = newVal;
+
+      if (og.size > 1 && newVal.size === 1) {
+        var newlyAffected = setOfDeps(depsForCoords({
+          x: x,
+          y: y
+        }));
+        newlyAffected.forEach(function (key) {
+          map[key].queue.push(function (c) {
+            return join(c, complement(newVal));
+          });
+        });
+        affected = union(affected, newlyAffected);
+      }
+    });
+  }
+
+  return board;
 };
 
 var smallestCell = function smallestCell(a, b) {
@@ -33250,8 +33356,8 @@ var search = function search(board) {
     };
   }, board).flatMap(function (row) {
     return row;
-  }).filter(function (_ref) {
-    var cell = _ref.cell;
+  }).filter(function (_ref4) {
+    var cell = _ref4.cell;
     return cell.size > 1;
   }).sort(smallestCell);
   var _cells$ = cells[0],
@@ -33287,10 +33393,12 @@ var fromString = function fromString(input) {
   return b;
 };
 
+var easy = '003020600900305001001806400008102900700000008006708200002609500800203009005010300';
 module.exports = {
   getBoard: getBoard,
   propagate: propagate,
   search: search,
+  easy: easy,
   fromString: fromString
 };
 },{"assert":"node_modules/assert/assert.js"}],"App.js":[function(require,module,exports) {
@@ -33311,7 +33419,8 @@ var _require2 = require('./'),
     getBoard = _require2.getBoard,
     propagate = _require2.propagate,
     search = _require2.search,
-    fromString = _require2.fromString;
+    fromString = _require2.fromString,
+    easy = _require2.easy;
 
 var App = function App() {
   var _React$useState = React.useState(getBoard()),
@@ -33319,7 +33428,7 @@ var App = function App() {
       board = _React$useState2[0],
       setBoard = _React$useState2[1];
 
-  var _React$useState3 = React.useState('003020600900305001001806400008102900700000008006708200002609500800203009005010300'),
+  var _React$useState3 = React.useState(easy),
       _React$useState4 = _slicedToArray(_React$useState3, 2),
       puzzleInput = _React$useState4[0],
       setPuzzle = _React$useState4[1];
@@ -33406,7 +33515,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52810" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61035" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
