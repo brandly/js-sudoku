@@ -8,6 +8,7 @@ const range = (a, b) => {
   return o
 }
 const intersection = (a, b) => new Set([...a].filter(x => b.has(x)))
+const union = (a, b) => new Set([...a, ...b])
 const all = list => {
   for (let i = 0; i < list.length; i++) {
     if (!list[i]) return false
@@ -26,7 +27,8 @@ const mapBoard = (fn, board) =>
   board.map((row, y) => row.map((cell, x) => fn(cell, { x, y })))
 const sameCoords = (a, b) => a.x === b.x && a.y === b.y
 
-const isPeer = (a, b) => a.x === b.x || a.y === b.y || sameSquare(a, b)
+const isPeer = (a, b) =>
+  !sameCoords(a, b) && (a.x === b.x || a.y === b.y || sameSquare(a, b))
 const sameSquare = (a, b) => {
   for (let x = 0; x <= 6; x += 3) {
     for (let y = 0; y <= 6; y += 3) {
@@ -42,16 +44,64 @@ const sameSquare = (a, b) => {
 assert.equal(sameSquare({ x: 0, y: 2 }, { x: 2, y: 2 }), true)
 assert.equal(sameSquare({ x: 0, y: 2 }, { x: 2, y: 3 }), false)
 
-const propagate = (semi, coords, board) =>
-  mapBoard(
-    (cell, cellCoords) =>
-      sameCoords(coords, cellCoords)
-        ? join(cell, semi)
-        : isPeer(coords, cellCoords)
-        ? join(cell, complement(semi))
-        : cell,
-    board
+const encode = ({ x, y }) => `${x},${y}`
+const decode = str => {
+  let [x, y] = str.split(',').map(v => parseInt(v))
+  return { x, y }
+}
+const buildDepMap = board => {
+  const cells = mapBoard((cell, coords) => ({ cell, coords }), board).flatMap(
+    row => row
   )
+  return cells.reduce((out, { cell, coords }) => {
+    out[encode(coords)] = {
+      deps: cells
+        .filter(c => isPeer(coords, c.coords))
+        .map(({ coords }) => coords),
+      queue: []
+    }
+    return out
+  }, {})
+}
+
+const propagate = (update, coords, originalBoard) => {
+  let map = buildDepMap(originalBoard)
+  let board = mapBoard(
+    (cell, cellCoords) =>
+      sameCoords(coords, cellCoords) ? join(cell, update) : cell,
+    originalBoard
+  )
+
+  const depsForCoords = coords => map[encode(coords)].deps
+  const setOfDeps = list => new Set(list.map(c => encode(c)))
+
+  let affected = setOfDeps(depsForCoords(coords))
+  affected.forEach(key => {
+    map[key].queue.push(c => join(c, complement(update)))
+  })
+
+  while (affected.size) {
+    let incoming = affected
+    affected = new Set()
+    incoming.forEach(key => {
+      let { x, y } = decode(key)
+      let og = board[y][x]
+      let newVal = map[key].queue.reduce((val, fn) => fn(val), og)
+
+      board[y][x] = newVal
+
+      if (og.size > 1 && newVal.size === 1) {
+        let newlyAffected = setOfDeps(depsForCoords({ x, y }))
+        newlyAffected.forEach(key => {
+          map[key].queue.push(c => join(c, complement(newVal)))
+        })
+        affected = union(affected, newlyAffected)
+      }
+    })
+  }
+
+  return board
+}
 
 const smallestCell = (a, b) => {
   if (a.cell.size < b.cell.size) {
