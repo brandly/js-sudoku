@@ -8,23 +8,8 @@ const App = () => {
   return (
     <div className="container">
       <h1>Sudoku</h1>
-      <form
-        className="row"
-        onSubmit={e => {
-          e.preventDefault()
-          setBoard(fromString(puzzleInput))
-        }}
-      >
-        <input
-          type="text"
-          value={puzzleInput}
-          onChange={e => {
-            setPuzzle(e.target.value)
-          }}
-        />
-        <input type="submit" value="View Puzzle" />
-      </form>
-      <table>
+
+      <table className="row">
         <tbody>
           {board.map((row, y) => (
             <tr key={y}>
@@ -70,6 +55,22 @@ const App = () => {
           Find Solution
         </button>
       </div>
+      <form
+        className="row"
+        onSubmit={e => {
+          e.preventDefault()
+          setBoard(fromString(puzzleInput))
+        }}
+      >
+        <input
+          type="text"
+          value={puzzleInput}
+          onChange={e => {
+            setPuzzle(e.target.value)
+          }}
+        />
+        <input type="submit" value="View Puzzle" />
+      </form>
     </div>
   )
 }
