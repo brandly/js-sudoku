@@ -33394,6 +33394,8 @@ var fromString = function fromString(input) {
 };
 
 var easy = '003020600900305001001806400008102900700000008006708200002609500800203009005010300';
+var hard = '.....6....59.....82....8....45........3........6..3.54...325..6..................'; // console.log(search(fromString(hard)))
+
 module.exports = {
   getBoard: getBoard,
   propagate: propagate,
@@ -33435,22 +33437,9 @@ var App = function App() {
 
   return React.createElement("div", {
     className: "container"
-  }, React.createElement("h1", null, "Sudoku"), React.createElement("form", {
-    className: "row",
-    onSubmit: function onSubmit(e) {
-      e.preventDefault();
-      setBoard(fromString(puzzleInput));
-    }
-  }, React.createElement("input", {
-    type: "text",
-    value: puzzleInput,
-    onChange: function onChange(e) {
-      setPuzzle(e.target.value);
-    }
-  }), React.createElement("input", {
-    type: "submit",
-    value: "View Puzzle"
-  })), React.createElement("table", null, React.createElement("tbody", null, board.map(function (row, y) {
+  }, React.createElement("h1", null, "Sudoku"), React.createElement("table", {
+    className: "row"
+  }, React.createElement("tbody", null, board.map(function (row, y) {
     return React.createElement("tr", {
       key: y
     }, row.map(function (cell, x) {
@@ -33483,7 +33472,22 @@ var App = function App() {
         setBoard(solution);
       }
     }
-  }, "Find Solution")));
+  }, "Find Solution")), React.createElement("form", {
+    className: "row",
+    onSubmit: function onSubmit(e) {
+      e.preventDefault();
+      setBoard(fromString(puzzleInput));
+    }
+  }, React.createElement("input", {
+    type: "text",
+    value: puzzleInput,
+    onChange: function onChange(e) {
+      setPuzzle(e.target.value);
+    }
+  }), React.createElement("input", {
+    type: "submit",
+    value: "View Puzzle"
+  })));
 };
 
 render(React.createElement(App, null), document.getElementById('main'));
@@ -33515,7 +33519,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61035" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57925" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
