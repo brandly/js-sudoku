@@ -4,11 +4,13 @@
     "deploy": "parcel build index.html --public-url ./ && gh-pages --dist dist/"
   },
   "devDependencies": {
-    "gh-pages": "2.2.0",
-    "parcel-bundler": "1.12.4"
+    "assert": "2.0.0",
+    "gh-pages": "4.0.0",
+    "parcel": "2.7.0",
+    "process": "0.11.10"
   },
   "dependencies": {
-    "react": "16.12.0",
-    "react-dom": "16.12.0"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }
