@@ -7,8 +7,7 @@ const range = (a, b) => {
   }
   return o
 }
-const intersection = (a, b) => new Set([...a].filter((x) => b.has(x)))
-const union = (a, b) => new Set([...a, ...b])
+const intersection = (a, b) => a.intersection(b)
 const all = (list) => {
   for (let i = 0; i < list.length; i++) {
     if (!list[i]) return false
@@ -95,7 +94,7 @@ const propagate = (update, coords, originalBoard) => {
         newlyAffected.forEach((key) => {
           map[key].queue.push((c) => join(c, complement(newVal)))
         })
-        affected = union(affected, newlyAffected)
+        affected = affected.union(newlyAffected)
       }
     })
   }
