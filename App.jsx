@@ -1,5 +1,5 @@
 const React = require('react')
-const { render } = require('react-dom')
+const { createRoot } = require('react-dom/client')
 const { getBoard, propagate, search, fromString, easy } = require('./')
 
 const App = () => {
@@ -22,7 +22,7 @@ const App = () => {
                 >
                   {cell.size > 1 ? (
                     <div className="remaining">
-                      {Array.from(cell).map(num => (
+                      {Array.from(cell).map((num) => (
                         <span
                           key={num}
                           onClick={() => {
@@ -57,7 +57,7 @@ const App = () => {
       </div>
       <form
         className="row"
-        onSubmit={e => {
+        onSubmit={(e) => {
           e.preventDefault()
           setBoard(fromString(puzzleInput))
         }}
@@ -65,7 +65,7 @@ const App = () => {
         <input
           type="text"
           value={puzzleInput}
-          onChange={e => {
+          onChange={(e) => {
             setPuzzle(e.target.value)
           }}
         />
@@ -75,4 +75,4 @@ const App = () => {
   )
 }
 
-render(<App />, document.getElementById('main'))
+createRoot(document.getElementById('main')).render(<App />)
