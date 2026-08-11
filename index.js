@@ -1,5 +1,3 @@
-const assert = require('assert')
-
 const range = (a, b) => {
   const o = []
   for (let i = a; i <= b; i++) {
@@ -18,7 +16,6 @@ const all = (list) => {
 const bottom = new Set(range(1, 9))
 const join = intersection
 const complement = (set) => new Set([...bottom].filter((v) => !set.has(v)))
-assert.deepEqual(Array.from(complement(new Set([1]))), range(2, 9))
 
 const getBoard = () => range(1, 9).map(() => range(1, 9).map(() => bottom))
 const mapBoard = (fn, board) =>
@@ -27,57 +24,49 @@ const sameCoords = (a, b) => a.x === b.x && a.y === b.y
 
 const isPeer = (a, b) =>
   !sameCoords(a, b) && (a.x === b.x || a.y === b.y || sameSquare(a, b))
-const sameSquare = (a, b) => {
-  for (let x = 0; x <= 6; x += 3) {
-    for (let y = 0; y <= 6; y += 3) {
-      const inWindow = (c) =>
-        c.x >= x && c.x <= x + 2 && c.y >= y && c.y <= y + 2
-      if (inWindow(a) && inWindow(b)) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
-assert.equal(sameSquare({ x: 0, y: 2 }, { x: 2, y: 2 }), true)
-assert.equal(sameSquare({ x: 0, y: 2 }, { x: 2, y: 3 }), false)
+const sameSquare = (a, b) =>
+  Math.floor(a.x / 3) === Math.floor(b.x / 3) &&
+  Math.floor(a.y / 3) === Math.floor(b.y / 3)
 
 const encode = ({ x, y }) => `${x},${y}`
 const decode = (str) => {
   const [x, y] = str.split(',').map((v) => parseInt(v))
   return { x, y }
 }
-const buildDepMap = (board) => {
-  const cells = mapBoard((cell, coords) => ({ cell, coords }), board).flatMap(
-    (row) => row
-  )
-  return cells.reduce((out, { coords }) => {
-    out[encode(coords)] = {
-      deps: cells
-        .filter((c) => isPeer(coords, c.coords))
-        .map(({ coords }) => coords),
-      queue: []
-    }
+const buildDepMap = () => {
+  const coords = range(0, 8).flatMap((y) => range(0, 8).map((x) => ({ x, y })))
+  return coords.reduce((out, c) => {
+    out[encode(c)] = coords.filter((other) => isPeer(c, other))
     return out
   }, {})
 }
+// the peer graph is pure geometry, so build it once
+const depMap = buildDepMap()
 
 const propagate = (update, coords, originalBoard) => {
-  const map = buildDepMap(originalBoard)
+  const newVal = join(originalBoard[coords.y][coords.x], update)
   const board = mapBoard(
     (cell, cellCoords) =>
-      sameCoords(coords, cellCoords) ? join(cell, update) : cell,
+      sameCoords(coords, cellCoords) ? newVal : cell,
     originalBoard
   )
 
-  const depsForCoords = (coords) => map[encode(coords)].deps
+  const depsForCoords = (coords) => depMap[encode(coords)]
   const setOfDeps = (list) => new Set(list.map((c) => encode(c)))
+  const queues = {}
+  const enqueue = (key, fn) => {
+    queues[key] = queues[key] || []
+    queues[key].push(fn)
+  }
 
-  let affected = setOfDeps(depsForCoords(coords))
-  affected.forEach((key) => {
-    map[key].queue.push((c) => join(c, complement(update)))
-  })
+  let affected = new Set()
+  // a cell only constrains its peers once it's pinned to a single value
+  if (newVal.size === 1) {
+    affected = setOfDeps(depsForCoords(coords))
+    affected.forEach((key) => {
+      enqueue(key, (c) => join(c, complement(newVal)))
+    })
+  }
 
   while (affected.size) {
     const incoming = affected
@@ -85,14 +74,15 @@ const propagate = (update, coords, originalBoard) => {
     incoming.forEach((key) => {
       const { x, y } = decode(key)
       const og = board[y][x]
-      const newVal = map[key].queue.reduce((val, fn) => fn(val), og)
+      const newVal = (queues[key] || []).reduce((val, fn) => fn(val), og)
+      queues[key] = []
 
       board[y][x] = newVal
 
       if (og.size > 1 && newVal.size === 1) {
         const newlyAffected = setOfDeps(depsForCoords({ x, y }))
         newlyAffected.forEach((key) => {
-          map[key].queue.push((c) => join(c, complement(newVal)))
+          enqueue(key, (c) => join(c, complement(newVal)))
         })
         affected = affected.union(newlyAffected)
       }
@@ -100,16 +90,6 @@ const propagate = (update, coords, originalBoard) => {
   }
 
   return board
-}
-
-const smallestCell = (a, b) => {
-  if (a.cell.size < b.cell.size) {
-    return -1
-  }
-  if (a.cell.size > b.cell.size) {
-    return 1
-  }
-  return 0
 }
 
 const isValid = (board) =>
@@ -125,12 +105,10 @@ const search = (board) => {
     return null
   }
 
-  const cells = mapBoard((cell, coords) => ({ cell, coords }), board)
+  const { cell, coords } = mapBoard((cell, coords) => ({ cell, coords }), board)
     .flatMap((row) => row)
     .filter(({ cell }) => cell.size > 1)
-    .sort(smallestCell)
-
-  const { cell, coords } = cells[0]
+    .reduce((min, c) => (c.cell.size < min.cell.size ? c : min))
   const vals = Array.from(cell)
 
   const update = new Set([vals[0]])
@@ -143,7 +121,7 @@ const search = (board) => {
 }
 const fromString = (input) => {
   let b = getBoard()
-  for (let i = 0; i < input.length; i++) {
+  for (let i = 0; i < Math.min(input.length, 81); i++) {
     const x = i % 9
     const y = Math.floor(i / 9)
     const num = parseInt(input[i])
@@ -162,5 +140,8 @@ module.exports = {
   propagate,
   search,
   easy,
-  fromString
+  fromString,
+  complement,
+  sameSquare,
+  range
 }
