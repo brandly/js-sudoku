@@ -1,10 +1,30 @@
-const React = require('react')
-const { createRoot } = require('react-dom/client')
-const { getBoard, propagate, search, fromString, easy } = require('./')
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { getBoard, propagate, fromString, easy } from './index.js'
 
 const App = () => {
   const [board, setBoard] = React.useState(getBoard())
   const [puzzleInput, setPuzzle] = React.useState(easy)
+  const [solving, setSolving] = React.useState(false)
+  const workerRef = React.useRef(null)
+
+  const findSolution = () => {
+    if (!workerRef.current) {
+      workerRef.current = new Worker(new URL('./worker.js', import.meta.url), {
+        type: 'module'
+      })
+    }
+    const worker = workerRef.current
+    setSolving(true)
+    worker.onmessage = (e) => {
+      setSolving(false)
+      if (e.data) {
+        setBoard(e.data)
+      }
+    }
+    worker.postMessage(board)
+  }
+
   return (
     <div className="container">
       <h1>Sudoku</h1>
@@ -44,15 +64,8 @@ const App = () => {
         </tbody>
       </table>
       <div className="row">
-        <button
-          onClick={() => {
-            let solution = search(board)
-            if (solution) {
-              setBoard(solution)
-            }
-          }}
-        >
-          Find Solution
+        <button onClick={findSolution} disabled={solving}>
+          {solving ? 'Solving…' : 'Find Solution'}
         </button>
       </div>
       <form
