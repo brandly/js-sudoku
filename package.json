@@ -1,6 +1,7 @@
 {
   "scripts": {
     "start": "parcel index.html",
+    "test": "node test.js",
     "deploy": "parcel build index.html --public-url ./ && gh-pages --dist dist/"
   },
   "devDependencies": {
