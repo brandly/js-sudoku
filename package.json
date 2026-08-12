@@ -8,11 +8,11 @@
   "devDependencies": {
     "assert": "2.1.0",
     "gh-pages": "6.3.0",
-    "parcel": "2.13.3",
+    "parcel": "2.16.4",
     "process": "0.11.10"
   },
   "dependencies": {
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   }
 }
