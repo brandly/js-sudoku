@@ -1,5 +1,5 @@
-const assert = require('assert')
-const {
+import assert from 'node:assert'
+import {
   getBoard,
   propagate,
   search,
@@ -8,7 +8,7 @@ const {
   complement,
   sameSquare,
   range
-} = require('./')
+} from './index.js'
 
 assert.deepEqual(Array.from(complement(new Set([1]))), range(2, 9))
 
